@@ -1,0 +1,121 @@
+package twokey;
+//import java.util.TreeMap; 
+
+public class TreeMap<K1 extends Comparable<K1>, K2 extends Comparable <K2>, D> {
+
+	Tree<K1, TwoKey<K1, K2, D>> tree1= new Tree<K1, TwoKey<K1, K2, D>>();  
+	Tree<K2, TwoKey< K1, K2, D>> tree2= new Tree<K2, TwoKey<K1, K2, D>>();
+
+	void insert (K1 key1, K2 key2, D data) {
+		TwoKey<K1, K2, D> folder = new TwoKey<>(key1, key2, data);
+		tree1.add(key1, folder);
+		tree2.add(key2, folder);
+	}
+
+	D search1(K1 key1) {
+		TwoKey<K1,K2,D> folder = tree1.find(key1); 
+		if( tree1 == null)
+			return null;
+		if(key1==null)
+			return null;	
+		else 
+			return folder.data;
+		
+	}
+
+	D search2(K2 key2) { //looks for and returns the data of key 2
+		TwoKey<K1,K2,D> folder = tree2.find(key2);
+		if(tree2==null)
+			return null;
+		if(key2==null)
+			return null;
+		else
+			return folder.data;
+
+	}
+	void modify1(K1 key1, D data) {
+		TwoKey<K1,K2,D> folder = tree1.find(key1);
+		if(folder ==null) {
+			System.out.println(key1 + " is empty.");
+		}
+		else { 
+			TwoKey<K1,K2,D> biggerFolder = new TwoKey<>(key1, folder.key2, data ); //biggerfolder replaces folder of two key
+			tree1.modify(key1, biggerFolder);
+			tree2.modify(biggerFolder.key2, biggerFolder); 
+		}
+
+	}
+	void modify2(K2 key2, D data) {
+		TwoKey<K1,K2,D> folder = tree2.find(key2);
+		if(folder==null) {
+			System.out.println( key2 + " is empty .");
+		}
+		else { 
+			TwoKey<K1,K2,D> biggerFolder = new TwoKey<>(folder.key1, key2, data );
+			tree1.modify(biggerFolder.key1, biggerFolder);
+			tree2.modify(key2, biggerFolder);
+		}
+	}	
+
+	public void delete1(K1 key1) {
+		TwoKey<K1,K2,D> folder = tree1.find(key1);
+		if(folder ==null) 
+			return;
+		tree1.delete(key1);			
+		tree2.delete(folder.key2);
+	}
+	public void change1(K1 key1, K2 key2) {
+		TwoKey<K1,K2,D> folder = tree1.find(key1);
+		if(folder ==null) 
+			return;
+		tree2.delete(folder.key2);
+		tree2.add(key2, folder);
+		folder.key2= key2;
+		return;
+
+	}
+	public void delete2(K2 key2) {
+		TwoKey<K1,K2,D> folder = tree2.find(key2);
+		if(folder ==null) 
+			return;
+		tree2.delete(key2);			
+		tree1.delete(folder.key1);
+	}
+
+	public void change2(K2 key2, K1 key1) {
+		TwoKey<K1,K2,D> folder = tree2.find(key2);
+		if(folder ==null) 
+			return;
+		tree1.delete(folder.key1);
+		tree1.add(key1, folder);
+		folder.key1= key1;
+		return;
+	}
+	String list1() {
+		return tree1.toString();
+	}
+	String list2() {
+		return tree2.toString();
+	}
+
+	public static void main(String[] args) {
+		TreeMap<String, Integer, Integer> db = new TreeMap<>();
+		db.insert("Sam", 7, 2); 
+		db.insert("Joe", 2, 3);
+		db.insert("Wilma", 3, 5);
+		db.insert("Bob", 4, 7);
+		db.insert("Cam", 9, 1);
+		System.out.println(db.search1("Cam"));
+		System.out.println(db.search2(4));
+		System.out.println(db.list1());
+		System.out.println(db.list2());
+		db.modify1("Cam",11);
+		db.modify1("Joe", 13);
+		db.modify1("Wilma", 4);
+		db.modify2(1, 17);
+		db.change1("Bob", 5);
+		db.change2(3, "Pebbles");
+		System.out.println(db.list1()); //list 1 tree one 
+		System.out.println(db.list2());
+	}
+}
