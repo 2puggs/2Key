@@ -1,0 +1,252 @@
+package twokey;
+public class Tree<K extends Comparable<K>,D> {
+
+	private class Node {
+		public K key;
+		public D data;
+
+		public Node left, right;
+
+		public Node(K k, D d, Node l, Node r) {
+			key = k; data = d; left = l; right = r;
+		}
+
+		public Node(K k, D d) {
+			this(k,d,null,null);
+		}
+
+		public String toString() { return "(" + key + "," + data + ")"; }
+	}
+
+	private Node root;
+	private int size;
+
+	public Tree() { root = null; size = 0;}
+
+	public Tree(K[] keys, D[] data) {
+		// Assume records are sorted.
+		root = buildTree(keys, data, 0, keys.length-1);
+	}
+
+	private Node buildTree(K[] keys, D[] data, int lo, int hi) {
+		if(lo > hi)
+			return null;
+		int m = (hi - lo) / 2 + lo;
+		return new Node(keys[m], data[m], 
+				buildTree(keys, data, lo, m-1),
+				buildTree(keys, data, m+1, hi));
+	}
+
+	public int size() { return size; }
+
+	private D find(K key, Node x) {
+		if(x == null)
+			return null;
+		int c = key.compareTo(x.key); 
+		if(c == 0)
+			return x.data;
+		else if(c < 0) 
+			return find(key, x.left);
+		else // c > 0
+			return find(key, x.right);
+	} 
+
+	public D find(K key) {
+		return find(key, root);
+	}
+
+	private int height(Node root) { // Write this method.
+		// Returns the height of the tree rooted at root.
+		// The height is the number of nodes on the longest path from the root to a leaf.
+		if(root == null)
+			return 0;
+		return 1 + Math.max(height(root.left),height(root.right));
+	}
+	public int height() { // Write this method
+		// Returns the height of the tree.
+		return height(root);
+	}
+	private int leaves(Node root) { // Write this method
+		// Returns the number of leaves of the tree rooted at root.
+		if(root == null)
+			return 0;
+		if(root.left == null && root.right == null)
+			return 1;
+		return leaves(root.left) + leaves(root.right);
+	}
+
+	public int leaves() { // Write this method
+		// Returns the number of leaves of the tree.
+		return leaves(root);
+	}
+
+	private int diameter(Node root) { // Write this method.
+		// Returns the diameter of the tree rooted at root.
+		// The diameter is the number of nodes on the longest path in the tree.
+		// Max of:
+		// 1 + height(left subtree) + height(right subtree), (if the longest path does pass through the root.)
+		// the diameter of the left subtree,
+		// the diameter of the right subtree.
+		if(root == null)
+			return 0;
+		return Math.max(Math.max(1 + height(root.left) + height(root.right),
+				diameter(root.left)),
+				diameter(root.right));
+
+	}
+
+	public int diameter() { // Write this method.
+		// Returns the diameter of the tree.
+		// The diameter is the number of nodes on the longest path in the tree.
+		return diameter(root);
+	}
+
+	private String printTree(Node root, int indent) {
+		if(root == null)
+			return "";
+		String s = printTree(root.right, indent+2);
+		for(int i=0; i<indent; i++)
+			s += " ";
+		return s + root + "\n" + printTree(root.left, indent+2);
+	}
+
+	public String printTree() {
+		return "--------------------\n" + printTree(root, 0) + "--------------------";
+
+	}
+
+
+	private Node add(K key, D data, Node root) {
+		// returns the tree with the added record. 
+		if(root == null) {
+			size++;
+			return new Node(key,data);
+		}
+		int c = key.compareTo(root.key); 
+		if(c == 0) {
+			System.err.println("Error: duplicate key: "+key);
+			System.exit(1);
+			return null;
+		}
+		else if(c < 0) {
+			root.left =  add(key, data, root.left);
+			return root;
+		}
+		else { // c > 0
+			root.right = add(key, data, root.right);
+			return root;
+		}
+	}
+
+	public void add(K key, D data) {
+		root = add(key, data, root);
+	}
+
+	private void modify(K key, D data, Node root) {
+		if(root == null) {
+			System.err.println("Error: key not found: "+key);
+			System.exit(1);
+		}
+		int c = key.compareTo(root.key);
+		if(c == 0)
+			root.data = data;
+		else if(c < 0) 
+			modify(key, data, root.left);
+		else // c > 0
+			modify(key, data, root.right);
+	}
+
+	public void modify(K key, D data) {
+		modify(key, data, root);
+	}
+
+	private String toString(Node root) {
+		if(root == null)
+			return "";
+		return toString(root.left)
+				+ root
+				+ toString(root.right);
+	}
+
+	public String toString() {
+		return toString(root);
+	}
+
+	private Node findLeftmost(Node root) {
+		// Assumes root != null.
+		return root.left == null 
+				? root
+						: findLeftmost(root.left);
+	}
+
+	private Node removeLeftmost(Node root) {
+		if(root.left == null) 
+			return root.right;
+		else {
+			root.left = removeLeftmost(root.left);
+			return root;
+		}
+	}
+
+	private Node delete(K key, Node root) {
+		if(root == null) {
+			System.err.println("Error: key not found");
+			System.exit(1);
+			return null;
+		}
+		int c = key.compareTo(root.key);
+		if(c == 0) {
+			size--;
+			if(root.left == null)
+				return root.right;
+			else if(root.right == null)
+				return root.left;
+			else {
+				Node t = root;
+				root = findLeftmost(root.right);
+				root.right = removeLeftmost(t.right);
+				root.left = t.left;
+				return root;
+			}
+		}
+		else if(c < 0) {
+			root.left = delete(key, root.left);
+			return root;
+		}
+		else { // c > 0
+			root.right = delete(key, root.right);
+			return root;
+		}
+	}
+
+	public void delete(K key) {
+		root = delete(key, root);
+	}
+
+	public static void main(String[] args) {
+		Character[] keys = { 'A', 'B', 'C', 'D', 'E', 'F', 'G' };
+		String[] data= { "Atlanta", "Boston", "Charleston", "Denver", "East Hampton", "Foxborough", "Galveston" };
+		Tree<Character, String> tree = new Tree<Character, String>(keys, data); // Create balanced tree.
+		System.out.println(tree);
+		System.out.println(tree.printTree());
+		System.out.println("height = " + tree.height());
+		System.out.println("number of leaves = " +  tree.leaves());
+		System.out.println("diameter = " + tree.diameter());
+		tree.delete('C');
+		tree.delete('D');
+		tree.add('P', "Pittsburgh");
+		tree.modify('A', "Austin");
+		System.out.println(tree);
+		System.out.println(tree.find('A'));
+		System.out.println(tree.find('D'));
+		Tree<Character, String> tree2 = new Tree<Character, String>(); // Create stringy tree.
+		for(int i=0; i<keys.length; i++)
+			tree2.add(keys[i], data[i]);
+		System.out.println(tree2);
+		System.out.println(tree2.printTree());
+		System.out.println("height = " + tree2.height());
+		System.out.println("number of leaves = " +  tree2.leaves());
+		System.out.println("diameter = " + tree2.diameter());
+
+	}
+}
